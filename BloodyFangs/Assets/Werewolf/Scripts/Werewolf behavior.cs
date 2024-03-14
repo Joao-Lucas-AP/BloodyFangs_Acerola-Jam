@@ -21,11 +21,13 @@ public class Werewolfbehavior : MonoBehaviour
 
     bool canMove = true;
 
+    public AudioSource audioSource;
+
     [Header("Animator")]
     public Animator animator;
 
     [Header("Health")]
-    [SerializeField] int maxHealth = 100;
+    [SerializeField] int maxHealth = 15;
     int currentHealth;
 
     [Header("Attack")]
@@ -46,6 +48,12 @@ public class Werewolfbehavior : MonoBehaviour
     void Update()
     {
         float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);
+
+        if (currentHealth <= 0)
+        {
+            audioSource.Play();
+            Die();
+        }
 
         if (canMove == true)
         {
@@ -81,19 +89,6 @@ public class Werewolfbehavior : MonoBehaviour
         }
     }
 
-    //Damage taking system method
-    public void TakeDamage(int damage)
-    {
-        currentHealth -= damage;
-
-        animator.SetTrigger("Hurt");
-
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
-    }
-
     void Attack()
     {
         animator.SetTrigger("Attack");
@@ -109,7 +104,15 @@ public class Werewolfbehavior : MonoBehaviour
     {
         if (player.tag == "Player")
         {
-            player.GetComponent<PlayerMovement>().TakeDamageFromEnemies(attackDamage);
+            player.GetComponent<PlayerMovement>().isDead = true;
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if(collision.gameObject.tag == "Bullet")
+        {
+            currentHealth--;
         }
     }
 
@@ -121,7 +124,7 @@ public class Werewolfbehavior : MonoBehaviour
         animator.SetBool("IsDead", true);
         StopAttack();
 
-        GetComponent<CapsuleCollider2D>().enabled = false;
+        GetComponent<CircleCollider2D>().enabled = false;
         GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Static;
 
         this.enabled = false;
@@ -151,13 +154,8 @@ public class Werewolfbehavior : MonoBehaviour
         animator.SetBool("IsWalking", false);
         rB2D.velocity = Vector2.zero;
     }
-    //Function called by animation event to stop enemy from walking when hurt
-    public void HurtEvent()
-    {
-        canMove = false;
-    }
 
-    //Function called by animator to make enemy walk when hurt animation finishes
+    //Function called by animator to make enemy walk when attack animation finishes
     public void CanMoveEvent()
     {
         canMove = true;

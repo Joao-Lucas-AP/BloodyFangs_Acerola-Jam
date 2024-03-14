@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -13,6 +14,9 @@ public class PlayerMovement : MonoBehaviour
     public float bulletSpeed = 20f;
     public int attackDamage = 1;
     bool canMove = true;
+    public GameObject bulletLight;
+    public AudioSource audioSound;
+    public bool isDead = false;
 
     [Header("Attack rate time")]
     public float attackRate = 2f;
@@ -24,11 +28,15 @@ public class PlayerMovement : MonoBehaviour
     public bool isFlipped = false;
 
     [Header("Health")]
-    public bool isDead = false;
+    public int health = 1;
+
+    [Header("UI")]
+    public GameObject gameOverPanel;
 
     void Start()
     {
-
+        bulletLight.SetActive(false);
+        gameOverPanel.SetActive(false);
     }
 
     void Update()
@@ -39,29 +47,13 @@ public class PlayerMovement : MonoBehaviour
         {
             if (Input.GetButtonDown("Fire1"))
             {
+                audioSound.Play();
                 Attack();
                 nextAttackTime = Time.time + 1f / attackRate;
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.I))
-        {
-            GetComponent<UIPlayer>().hp -= 25f;
-            canMove = false;
-
-            if (GetComponent<UIPlayer>().hp <= 0)
-            {
-                Death();
-            }
-        }
-    }
-
-    public void TakeDamageFromEnemies(float damage)
-    {
-        GetComponent<UIPlayer>().hp -= damage;
-        canMove = false;
-
-        if (GetComponent<UIPlayer>().hp <= 0)
+        if(isDead == true)
         {
             Death();
         }
@@ -93,24 +85,34 @@ public class PlayerMovement : MonoBehaviour
     }
 
     //Attack code
-    void Attack()
+    public void Attack()
     {
         animator.SetTrigger("Shoot");
-        var bullet = Instantiate(bulletPrefab, BulletSpawn.position, BulletSpawn.rotation);
         canMove = false;
+    }
+
+    void BulletEvent()
+    {
+        var bullet = Instantiate(bulletPrefab, BulletSpawn.position, BulletSpawn.rotation);
         bullet.GetComponent<Rigidbody2D>().velocity = BulletSpawn.right * bulletSpeed;
+        bulletLight.SetActive(true);
     }
 
     void Death()
     {
-         GetComponent<BoxCollider2D>().enabled = false;
-         GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Static;
-         isDead = true;
-         this.enabled = false;
+        gameOverPanel.SetActive(true);
+
+        //Tirar isso da build!!
+         Debug.Log("Está morto!!!");
     }
 
     public void BackToMove()
     {
         canMove = true;
+    }
+
+    public void LightsOff()
+    {
+        bulletLight.SetActive(false);
     }
 }
